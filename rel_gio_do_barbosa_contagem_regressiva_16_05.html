@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relógio do Barbosa & Contagem 16:05</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        barbosaGold: '#FFD700',
+                        barbosaPurple: '#8B5CF6',
+                        barbosaDark: '#0B0F17',
+                        barbosaCard: '#131A26',
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2.5s infinite alternate',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(139, 92, 246, 0.25)' },
+                            '100%': { boxShadow: '0 0 45px rgba(255, 215, 0, 0.45)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #080b11;
+            background-image: 
+                radial-gradient(at 15% 15%, rgba(139, 92, 246, 0.15) 0px, transparent 45%),
+                radial-gradient(at 85% 85%, rgba(255, 215, 0, 0.12) 0px, transparent 45%),
+                radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.05) 0px, transparent 60%);
+            background-attachment: fixed;
+        }
+
+        /* Glowing text effects */
+        .glow-gold {
+            text-shadow: 0 0 16px rgba(255, 215, 0, 0.6);
+        }
+        .glow-purple {
+            text-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+        }
+        .glow-cyan {
+            text-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-gray-100 font-sans min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-barbosaGold selection:text-black">
+
+    <!-- Top Accent Bar -->
+    <div class="h-1.5 w-full bg-gradient-to-r from-purple-600 via-amber-400 to-emerald-500 shadow-md"></div>
+
+    <!-- Header Navigation -->
+    <header class="max-w-5xl w-full mx-auto px-4 py-5 flex flex-wrap justify-between items-center gap-4 border-b border-gray-800/80">
+        <div class="flex items-center gap-3">
+            <!-- Barbosa Avatar Icon -->
+            <div class="relative w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-amber-400 p-0.5 shadow-lg animate-float">
+                <div class="w-full h-full bg-gray-900 rounded-[14px] flex items-center justify-center overflow-hidden text-amber-400 font-extrabold text-xl">
+                    👓
+                </div>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                    BARBOSA <span class="text-xs px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 font-mono border border-purple-700/50">Brasília GMT-3</span>
+                </h1>
+                <p class="text-xs text-gray-400">Contagem Regressiva Oficial para as 16:05</p>
+            </div>
+        </div>
+
+        <!-- Audio Control -->
+        <div class="flex items-center gap-3">
+            <button id="audioToggleBtn" onclick="toggleAudio()" class="px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 border border-gray-700 text-xs font-semibold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-md">
+                <i id="audioIcon" class="fa-solid fa-volume-xmark text-red-400"></i>
+                <span id="audioText">Som do Alarme: Off</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl w-full mx-auto px-4 py-8 flex flex-col items-center gap-8 my-auto">
+
+        <!-- BARBOSA PROFILE BANNER -->
+        <div class="w-full bg-barbosaCard/80 border border-amber-500/30 rounded-3xl p-6 backdrop-blur-xl shadow-2xl flex flex-col md:flex-row items-center gap-6 relative overflow-hidden animate-pulse-glow">
+            
+            <!-- Glow background overlay -->
+            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Avatar Representation with Direct Photo Upload Option -->
+            <div class="relative flex-shrink-0 flex flex-col items-center gap-2">
+                <div class="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gradient-to-tr from-amber-400 via-purple-500 to-red-500 p-1 shadow-2xl relative">
+                    <div id="barbosaAvatarContainer" class="w-full h-full bg-gray-950 rounded-[12px] flex items-center justify-center relative overflow-hidden group">
+                        <!-- Cole o nome do seu arquivo de imagem do GitHub em 'src="barbosa.jpg"' abaixo -->
+                        <img src="barbosa.jpg" class="w-full h-full object-cover rounded-[12px]" alt="Foto do Barbosa" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-amber-400 text-xs font-bold text-center p-2\'>👓 Suba barbosa.jpg pro GitHub</div>';">
+                    </div>
+                </div>
+                <!-- Photo Upload Button -->
+                <label for="photoUploadInput" class="cursor-pointer text-[11px] bg-gray-800 hover:bg-emerald-900/50 text-amber-300 hover:text-amber-200 px-3 py-1 rounded-full border border-amber-500/40 transition-all flex items-center gap-1.5 shadow active:scale-95">
+                    <i class="fa-solid fa-camera text-amber-400"></i>
+                    <span>Colocar Foto Real</span>
+                </label>
+                <input type="file" id="photoUploadInput" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+            </div>
+
+            <!-- Header Text -->
+            <div class="flex-1 text-center md:text-left space-y-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-semibold">
+                    <i class="fa-solid fa-heart text-red-500 animate-pulse"></i> Barbosa (17 Anos & Apaixonado 💕)
+                </div>
+                <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight">
+                    Objetivo: Encontro das <span class="text-barbosaGold glow-gold">16:05:00</span> 💕
+                </h2>
+                <p id="targetDateText" class="text-xs md:text-sm text-amber-300/90 font-mono font-semibold">Calculando horário do encontro...</p>
+            </div>
+        </div>
+
+        <!-- COUNTDOWN TIMER DISPLAY -->
+        <div class="w-full bg-gray-900/90 backdrop-blur-xl border border-gray-800 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <!-- Hours -->
+                <div class="bg-gray-950/80 border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner">
+                    <span id="cd-hours" class="font-mono text-3xl md:text-5xl font-extrabold text-barbosaGold glow-gold">00</span>
+                    <span class="text-[10px] md:text-xs uppercase tracking-widest text-gray-400 font-bold mt-2">Horas</span>
+                </div>
+                <!-- Minutes -->
+                <div class="bg-gray-950/80 border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner">
+                    <span id="cd-minutes" class="font-mono text-3xl md:text-5xl font-extrabold text-barbosaGold glow-gold">00</span>
+                    <span class="text-[10px] md:text-xs uppercase tracking-widest text-gray-400 font-bold mt-2">Minutos</span>
+                </div>
+                <!-- Seconds -->
+                <div class="bg-gray-950/80 border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner">
+                    <span id="cd-seconds" class="font-mono text-3xl md:text-5xl font-extrabold text-white">00</span>
+                    <span class="text-[10px] md:text-xs uppercase tracking-widest text-gray-400 font-bold mt-2">Segundos</span>
+                </div>
+                <!-- Milliseconds -->
+                <div class="bg-gray-950/80 border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner">
+                    <span id="cd-ms" class="font-mono text-2xl md:text-4xl font-extrabold text-purple-400 glow-purple">000</span>
+                    <span class="text-[10px] md:text-xs uppercase tracking-widest text-gray-400 font-bold mt-2">Milissegundos</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- REAL-TIME BRASÍLIA CLOCK -->
+        <div class="w-full bg-gray-900/60 border border-gray-800 rounded-2xl p-4 md:p-5 backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
+                <div class="text-left">
+                    <div class="text-[11px] text-gray-400 uppercase tracking-wider font-semibold">Horário Atual de Brasília (GMT-3)</div>
+                    <div id="bsb-date" class="text-xs md:text-sm font-semibold text-gray-200">Carregando data...</div>
+                </div>
+            </div>
+
+            <!-- Main Clock Display -->
+            <div class="bg-black/80 px-6 py-2.5 rounded-xl border border-gray-800 font-mono text-xl md:text-2xl font-black tracking-wider text-cyan-400 glow-cyan">
+                <span id="clock-hours">00</span>:<span id="clock-minutes">00</span>:<span id="clock-seconds">00</span>.<span id="clock-ms" class="text-sm text-cyan-600">000</span>
+            </div>
+        </div>
+
+        <!-- "PERGUNTE PARA O BARBOSA" CHAT BOX -->
+        <div class="w-full bg-barbosaCard border border-purple-500/40 rounded-3xl p-5 md:p-6 shadow-2xl flex flex-col gap-4">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600/30 border border-emerald-400/50 flex items-center justify-center text-emerald-400 text-xl shadow">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            Pergunte para o Barbosa <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-900/80 text-emerald-300 border border-emerald-700 font-mono">Zap da IA</span>
+                        </h3>
+                        <p class="text-xs text-gray-400">Respostas curtas estilo zap do Barbosa (17 anos, maluquinho e lerdinho kkkk)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Scroll Area -->
+            <div id="chatMessages" class="min-h-[160px] max-h-[280px] overflow-y-auto space-y-3 pr-2 text-xs md:text-sm">
+                <div class="bg-emerald-950/30 border border-emerald-800/40 p-3 rounded-2xl text-emerald-200 space-y-1">
+                    <p class="font-bold text-emerald-400">👓 Zap do Barbosa:</p>
+                    <p>fala tu mn kkkkkkk o barbosa tá ajeitando o cabelo aqui pras 16:05! hj tem o grande encontro com a gatinha do 9º ano 🔥💕</p>
+                </div>
+            </div>
+
+            <!-- Pre-made Prompts -->
+            <div class="flex flex-wrap gap-2 pt-1">
+                <button onclick="sendQuickPrompt('E esse amor com a menina do 9º ano? 👀')" class="text-[11px] bg-gray-800 hover:bg-emerald-900/40 text-gray-300 hover:text-emerald-300 px-3 py-1.5 rounded-xl border border-gray-700 transition-all">
+                    👀 E a gatinha do 9º ano?
+                </button>
+                <button onclick="sendQuickPrompt('O Barbosa tá muito nervoso pras 16:05? 😳')" class="text-[11px] bg-gray-800 hover:bg-emerald-900/40 text-gray-300 hover:text-emerald-300 px-3 py-1.5 rounded-xl border border-gray-700 transition-all">
+                    😳 Nervoso pras 16:05?
+                </button>
+                <button onclick="sendQuickPrompt('Manda uma zoada engraçada sobre o Barbosa!')" class="text-[11px] bg-gray-800 hover:bg-emerald-900/40 text-gray-300 hover:text-emerald-300 px-3 py-1.5 rounded-xl border border-gray-700 transition-all">
+                    🤪 Manda uma zoada dele
+                </button>
+            </div>
+
+            <!-- Input Box -->
+            <div class="flex gap-2 pt-2 border-t border-gray-800">
+                <input id="chatInput" type="text" placeholder="Manda uma mensagem no Zap pro Barbosa..." onkeypress="handleChatKeyPress(event)" class="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-emerald-400">
+                <button onclick="sendChatMessage()" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black px-5 py-3 rounded-xl text-xs md:text-sm font-extrabold transition-all active:scale-95 flex items-center gap-2 shadow-lg">
+                    <span>Enviar</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- CELEBRATION MODAL (Triggers at 16:05:00) -->
+    <div id="celebrationModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-500">
+        <div class="bg-gray-900 border-2 border-amber-400 rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-6 shadow-2xl transform scale-90 transition-transform duration-500 relative overflow-hidden" id="modalCard">
+            
+            <div class="w-20 h-20 mx-auto rounded-2xl bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-4xl animate-bounce">
+                💘
+            </div>
+
+            <div class="space-y-2">
+                <span class="text-xs font-mono text-amber-400 uppercase tracking-widest font-bold">DEU 16:05 NO HORÁRIO DE BRASÍLIA!</span>
+                <h3 class="text-3xl font-black text-white glow-gold">HORA DO ENCONTRO! 💕🎉</h3>
+                <p class="text-sm text-gray-300">A contagem acabou! O Barbosa tá indo encontrar a menina do 9º ano agora mesmo! Desejem boa sorte pro nosso garoto! 🔥 amor no ar!</p>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeCelebrationModal()" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-black text-sm shadow-lg transition-all transform hover:scale-105 active:scale-95">
+                    TORCER PELO BARBOSA <i class="fa-solid fa-heart ml-2 text-red-600"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="max-w-5xl w-full mx-auto px-4 py-6 text-center text-xs text-gray-500 border-t border-gray-800/60 mt-8">
+        <p>Relógio Supremo do Barbosa &copy; Horário Oficial de Brasília (GMT-3)</p>
+    </footer>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        // --- PHOTO UPLOAD LOGIC ---
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = document.getElementById('barbosaAvatarContainer');
+                    container.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-[12px]" alt="Foto do Barbosa">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- GEMINI API CALL (BARBOSA 17YO ROMANCE & ZAP STYLE) ---
+        async function callGeminiApi(prompt) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `Você é o melhor amigo e fã número 1 do BARBOSA!
+Sua missão é responder TUDO no Zap zoando o Barbosa e fofocando sobre o grande amor da vida dele!
+
+QUEM É O BARBOSA:
+- Garoto de 17 anos, muito engraçado, maluquinho, carismático e gente boa demais!
+- Ele é COMPLETAMENTE APAIXONADO por uma menina do 9º ano! É o amor da vida dele!
+- O objetivo supremo da vida dele hoje é o encontro das 16:05 em ponto com ela!
+
+REGRAS OBRIGATÓRIAS DAS RESPOSTAS:
+1. MENSAGENS EXTREMAMENTE CURTAS! No máximo 1 ou 2 frases bem curtas (estilo rápida de WhatsApp).
+2. Pode zoar e gastar uma onda com o Barbosa (falar do nervosismo dele, do estilo, do xaveco), mas NÃO precisa ficar repetindo a palavra "lerdo".
+3. Foco no encontro das 16:05 com a gatinha do 9º ano e no quanto ele tá apaixonado e eufórico kkkkk.
+4. Use gírias do Zap: "kkkkkk", "mn", "na moral", "o barbosa tá apaixonadão tnc", "16:05 vai rolar o xaveco", "tmj".`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            let delay = 1000;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                } catch (e) {
+                    if (attempt === 2) return null;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+            return null;
+        }
+
+        // --- CHAT INTERACTION LOGIC ---
+        function sendQuickPrompt(text) {
+            document.getElementById('chatInput').value = text;
+            sendChatMessage();
+        }
+
+        function handleChatKeyPress(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const messagesContainer = document.getElementById('chatMessages');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // User Message
+            const userBubble = document.createElement('div');
+            userBubble.className = 'bg-emerald-900/40 text-emerald-100 p-3 rounded-2xl text-right max-w-[85%] ml-auto border border-emerald-700/50';
+            userBubble.innerText = text;
+            messagesContainer.appendChild(userBubble);
+
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Loading Indicator
+            const loadingBubble = document.createElement('div');
+            loadingBubble.className = 'bg-gray-800 border border-gray-700 p-2.5 rounded-2xl text-gray-400 max-w-[85%] flex items-center gap-2 text-xs';
+            loadingBubble.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-emerald-400"></i> Barbosa tá pensando (meio devagar kkkk)...';
+            messagesContainer.appendChild(loadingBubble);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // API Call
+            const aiResponse = await callGeminiApi(text);
+
+            messagesContainer.removeChild(loadingBubble);
+
+            // AI Response (WhatsApp Short Style)
+            const aiBubble = document.createElement('div');
+            aiBubble.className = 'bg-emerald-950/70 border border-emerald-600/50 p-3 rounded-2xl text-emerald-100 max-w-[88%] shadow space-y-1';
+            
+            const responseText = aiResponse || "kkkkkk o barbosa moscou aqui no zap, mas ele falou q te ama mn! 16:05 na veia 🔥";
+            aiBubble.innerHTML = `<p class="font-bold text-emerald-400 text-xs">👓 Zap do Barbosa:</p><p class="text-xs md:text-sm font-medium">${responseText}</p>`;
+            
+            messagesContainer.appendChild(aiBubble);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // --- GLOBAL AUDIO & CELEBRATION STATE ---
+        let audioEnabled = false;
+        let audioCtx = null;
+        let celebrationTriggered = false;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleAudio() {
+            initAudioContext();
+            audioEnabled = !audioEnabled;
+            
+            const icon = document.getElementById('audioIcon');
+            const text = document.getElementById('audioText');
+            const btn = document.getElementById('audioToggleBtn');
+
+            if (audioEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-emerald-400';
+                text.innerText = 'Som do Alarme: On';
+                btn.classList.add('border-emerald-500/50', 'bg-emerald-950/30');
+                playTone(587.33, 'sine', 0.1, 0.1);
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-red-400';
+                text.innerText = 'Som do Alarme: Off';
+                btn.classList.remove('border-emerald-500/50', 'bg-emerald-950/30');
+            }
+        }
+
+        function playTone(freq, type = 'sine', duration = 0.2, vol = 0.2) {
+            if (!audioEnabled) return;
+            try {
+                initAudioContext();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.error("Audio error:", e);
+            }
+        }
+
+        function playVictoryAlarm() {
+            if (!audioEnabled) return;
+            initAudioContext();
+
+            const notes = [
+                { f: 523.25, d: 0.15 },
+                { f: 659.25, d: 0.15 },
+                { f: 783.99, d: 0.15 },
+                { f: 1046.50, d: 0.4 },
+                { f: 880.00, d: 0.2 },
+                { f: 1046.50, d: 0.6 }
+            ];
+
+            let delay = 0;
+            notes.forEach((note) => {
+                setTimeout(() => {
+                    playTone(note.f, 'square', note.d, 0.25);
+                }, delay * 1000);
+                delay += note.d + 0.05;
+            });
+        }
+
+        // --- BRASÍLIA TIME & COUNTDOWN ENGINE ---
+        function getBrasiliaDate() {
+            const now = new Date();
+            const bsbString = now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" });
+            const bsbDate = new Date(bsbString);
+            bsbDate.setMilliseconds(now.getMilliseconds());
+            return bsbDate;
+        }
+
+        function getNextTargetBrasiliaDate(currentBsbDate) {
+            const target = new Date(currentBsbDate.getTime());
+            target.setHours(16, 5, 0, 0);
+
+            if (currentBsbDate.getTime() >= target.getTime()) {
+                target.setDate(target.getDate() + 1);
+            }
+            return target;
+        }
+
+        function updateClockAndCountdown() {
+            const nowBsb = getBrasiliaDate();
+
+            // Real-Time Clock Display
+            const h = String(nowBsb.getHours()).padStart(2, '0');
+            const m = String(nowBsb.getMinutes()).padStart(2, '0');
+            const s = String(nowBsb.getSeconds()).padStart(2, '0');
+            const ms = String(nowBsb.getMilliseconds()).padStart(3, '0');
+
+            document.getElementById('clock-hours').innerText = h;
+            document.getElementById('clock-minutes').innerText = m;
+            document.getElementById('clock-seconds').innerText = s;
+            document.getElementById('clock-ms').innerText = ms;
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateFormatted = nowBsb.toLocaleDateString('pt-BR', options);
+            document.getElementById('bsb-date').innerText = dateFormatted.charAt(0).toUpperCase() + dateFormatted.slice(1);
+
+            // Target Countdown calculation
+            const targetBsb = getNextTargetBrasiliaDate(nowBsb);
+            const targetFormatted = targetBsb.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            document.getElementById('targetDateText').innerText = `Próximo evento do Barbosa: ${targetFormatted} às 16:05:00 (GMT-3)`;
+
+            const diffMs = Math.max(0, targetBsb.getTime() - nowBsb.getTime());
+
+            // Check for 16:05:00 Trigger
+            if (diffMs <= 0 || (nowBsb.getHours() === 16 && nowBsb.getMinutes() === 5 && nowBsb.getSeconds() === 0)) {
+                if (!celebrationTriggered) {
+                    triggerCelebration();
+                }
+            } else {
+                if (diffMs > 2000) {
+                    celebrationTriggered = false;
+                }
+            }
+
+            // Breakdown time units
+            const cdHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const cdMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const cdSeconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+            const cdMs = Math.floor(diffMs % 1000);
+
+            document.getElementById('cd-hours').innerText = String(cdHours).padStart(2, '0');
+            document.getElementById('cd-minutes').innerText = String(cdMinutes).padStart(2, '0');
+            document.getElementById('cd-seconds').innerText = String(cdSeconds).padStart(2, '0');
+            document.getElementById('cd-ms').innerText = String(cdMs).padStart(3, '0');
+
+            requestAnimationFrame(updateClockAndCountdown);
+        }
+
+        // --- CELEBRATION ENGINE ---
+        function triggerCelebration() {
+            celebrationTriggered = true;
+
+            // Audio Alarm
+            playVictoryAlarm();
+
+            // Confetti Blast
+            const duration = 5 * 1000;
+            const animationEnd = Date.now() + duration;
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+
+                const particleCount = 40 * (timeLeft / duration);
+                confetti({
+                    particleCount,
+                    spread: 360,
+                    startVelocity: 30,
+                    origin: { x: Math.random(), y: Math.random() - 0.2 },
+                    colors: ['#FFD700', '#8B5CF6', '#10B981', '#FFFFFF']
+                });
+            }, 250);
+
+            // Show Modal
+            const modal = document.getElementById('celebrationModal');
+            const modalCard = document.getElementById('modalCard');
+
+            modal.classList.remove('pointer-events-none', 'opacity-0');
+            modal.classList.add('opacity-100');
+            modalCard.classList.remove('scale-90');
+            modalCard.classList.add('scale-100');
+        }
+
+        function closeCelebrationModal() {
+            const modal = document.getElementById('celebrationModal');
+            const modalCard = document.getElementById('modalCard');
+
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.classList.remove('opacity-100');
+            modalCard.classList.remove('scale-100');
+            modalCard.classList.add('scale-90');
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            updateClockAndCountdown();
+
+            document.body.addEventListener('click', function initAudioOnInteraction() {
+                initAudioContext();
+                document.body.removeEventListener('click', initAudioOnInteraction);
+            }, { once: true });
+        };
+    </script>
+</body>
+</html>
